@@ -6,7 +6,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 const AGGridWidget = ({ id, title, sourceKey, agGridOptions, interactions }) => {
-  const { dataSources, loading, handleInteraction } = useDashboard();
+  const { dataSources, loading, handleInteraction, interactionFilters } = useDashboard();
 
   const onRowSelected = useCallback((event) => {
     if (interactions?.onRowSelected && event.node.isSelected()) {
@@ -22,16 +22,48 @@ const AGGridWidget = ({ id, title, sourceKey, agGridOptions, interactions }) => 
   }
 
   const rowData = dataSources[sourceKey]?.data || [];
+  
+  // Check if this grid is affected by filters
+  const hasActiveFilters = interactionFilters && Object.keys(interactionFilters.salesData || {}).length > 0;
+  const isAffectedByFilters = hasActiveFilters && sourceKey === 'userMetrics';
+  
+  // Create a string representation of active filters
+  let activeFiltersText = '';
+  if (isAffectedByFilters) {
+    activeFiltersText = Object.entries(interactionFilters.salesData)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(', ');
+  }
+
+  // Debug info
+  console.log(`Rendering grid ${id} with data:`, rowData);
+  console.log(`Grid interactions:`, interactions);
 
   return (
     <div className="widget">
-      <h3>{title}</h3>
+      <div className="widget-header" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '10px'
+      }}>
+        <div>
+          <h3 style={{ margin: 0 }}>{title}</h3>
+          {isAffectedByFilters && (
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+              Filtered by: {activeFiltersText}
+            </div>
+          )}
+        </div>
+      </div>
       <div className="ag-theme-alpine-dark" style={{ height: 'calc(100% - 40px)', width: '100%' }}>
         <AgGridReact
           {...agGridOptions}
           rowData={rowData}
           onRowSelected={onRowSelected}
           modules={[ClientSideRowModelModule]}
+          pagination={true}
+          paginationPageSize={5}
           defaultColDef={{
             ...agGridOptions.defaultColDef,
             cellStyle: { color: 'var(--text-color)' }

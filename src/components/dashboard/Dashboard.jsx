@@ -49,7 +49,7 @@ const Dashboard = () => {
               className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              {tab.title}
+              {tab.label || tab.title}
             </button>
           ))}
         </div>
@@ -71,4 +71,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

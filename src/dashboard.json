@@ -1,6 +1,6 @@
 {
   "dashboardId": "exec_summary",
-  "title": "Executive Sales Dashboard",
+  "title": "Sales Analytics Dashboard",
   "theme": {
     "mode": "dark",
     "primaryColor": "#00B8D9",
@@ -11,6 +11,14 @@
       "type": "api",
       "url": "/api/data/sales",
       "method": "GET"
+    },
+    "salesByProduct": {
+      "type": "api",
+      "url": "/api/data/sales/by-product"
+    },
+    "salesByMonth": {
+      "type": "api",
+      "url": "/api/data/sales/by-month"
     },
     "userMetrics": {
       "type": "api",
@@ -24,57 +32,277 @@
   "globalFilters": [
     {
       "id": "dateRange",
+      "label": "Date Range",
       "type": "dateRange",
-      "label": "Date",
-      "field": "date",
-      "default": { "from": "2024-01-01", "to": "2024-12-31" },
-      "appliesTo": ["salesData", "userMetrics"]
+      "default": {
+        "start": "2023-01-01",
+        "end": "2023-12-31"
+      }
     },
     {
-      "id": "regionFilter",
-      "type": "dropdown",
+      "id": "region",
       "label": "Region",
-      "field": "region",
-      "optionsSource": "regions",
-      "multi": true,
-      "appliesTo": ["salesData"]
+      "type": "select",
+      "options": ["All", "North", "South", "East", "West"],
+      "default": "All"
     }
   ],
   "tabs": [
     {
       "id": "overview",
-      "title": "Overview",
+      "label": "Overview",
       "autoRefresh": 60,
       "widgets": [
         {
-          "id": "barchart",
+          "id": "salesTrends",
           "type": "AgChart",
           "title": "Sales and Revenue Trends",
-          "sourceKey": "salesData",
-          "layout": { "x": 0, "y": 0, "w": 6, "h": 5 },
+          "sourceKey": "salesByMonth",
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "agChartOptions": {
+            "series": [
+              {
+                "type": "column",
+                "xKey": "month",
+                "yKey": "sales",
+                "yName": "Sales",
+                "fill": "#4dabf5"
+              },
+              {
+                "type": "line",
+                "xKey": "month",
+                "yKey": "revenue",
+                "yName": "Revenue",
+                "stroke": "#ff9800",
+                "marker": {
+                  "fill": "#ff9800",
+                  "stroke": "#ff9800"
+                }
+              }
+            ],
+            "axes": [
+              {
+                "type": "category",
+                "position": "bottom"
+              },
+              {
+                "type": "number",
+                "position": "left",
+                "keys": ["sales"],
+                "title": {
+                  "text": "Sales (units)"
+                }
+              },
+              {
+                "type": "number",
+                "position": "right",
+                "keys": ["revenue"],
+                "title": {
+                  "text": "Revenue ($)"
+                }
+              }
+            ]
+          },
+          "interactions": {
+            "onClick": {
+              "type": "filter",
+              "filterKey": "month",
+              "targetComponents": ["salesByProduct", "revenueByProduct", "userEngagement", "userMetricsTable"]
+            }
+          }
+        },
+        {
+          "id": "salesByProduct",
+          "type": "AgChart",
+          "title": "Sales by Product",
+          "sourceKey": "salesByProduct",
+          "layout": {
+            "x": 6,
+            "y": 0,
+            "w": 3,
+            "h": 4
+          },
+          "agChartOptions": {
+            "series": [
+              {
+                "type": "pie",
+                "angleKey": "sales",
+                "calloutLabelKey": "product",
+                "sectorLabelKey": "sales",
+                "fills": ["#4dabf5", "#ff9800", "#8bc34a", "#f44336", "#9c27b0"]
+              }
+            ]
+          },
+          "interactions": {
+            "onClick": {
+              "type": "filter",
+              "filterKey": "product",
+              "targetComponents": ["salesTrends", "revenueByProduct", "userEngagement", "userMetricsTable"]
+            }
+          }
+        },
+        {
+          "id": "revenueByProduct",
+          "type": "AgChart",
+          "title": "Revenue by Product",
+          "sourceKey": "salesByProduct",
+          "layout": {
+            "x": 9,
+            "y": 0,
+            "w": 3,
+            "h": 4
+          },
+          "agChartOptions": {
+            "series": [
+              {
+                "type": "pie",
+                "angleKey": "revenue",
+                "calloutLabelKey": "product",
+                "sectorLabelKey": "revenue",
+                "fills": ["#4dabf5", "#ff9800", "#8bc34a", "#f44336", "#9c27b0"]
+              }
+            ]
+          },
+          "interactions": {
+            "onClick": {
+              "type": "filter",
+              "filterKey": "product",
+              "targetComponents": ["salesTrends", "salesByProduct", "userEngagement", "userMetricsTable"]
+            }
+          }
+        },
+        {
+          "id": "userEngagement",
+          "type": "AgChart",
+          "title": "User Engagement Over Time",
+          "sourceKey": "userMetrics",
+          "layout": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 4
+          },
+          "agChartOptions": {
+            "series": [
+              {
+                "type": "line",
+                "xKey": "month",
+                "yKey": "activeUsers",
+                "yName": "Active Users",
+                "stroke": "#4dabf5",
+                "marker": {
+                  "fill": "#4dabf5",
+                  "stroke": "#4dabf5"
+                }
+              },
+              {
+                "type": "line",
+                "xKey": "month",
+                "yKey": "newUsers",
+                "yName": "New Users",
+                "stroke": "#8bc34a",
+                "marker": {
+                  "fill": "#8bc34a",
+                  "stroke": "#8bc34a"
+                }
+              },
+              {
+                "type": "column",
+                "xKey": "month",
+                "yKey": "churnRate",
+                "yName": "Churn Rate (%)",
+                "fill": "#f44336"
+              }
+            ],
+            "axes": [
+              {
+                "type": "category",
+                "position": "bottom"
+              },
+              {
+                "type": "number",
+                "position": "left",
+                "keys": ["activeUsers", "newUsers"],
+                "title": {
+                  "text": "Users"
+                }
+              },
+              {
+                "type": "number",
+                "position": "right",
+                "keys": ["churnRate"],
+                "title": {
+                  "text": "Churn Rate (%)"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "userMetricsTable",
+          "type": "AGGrid",
+          "title": "User Metrics Details",
+          "sourceKey": "userMetrics",
+          "layout": {
+            "x": 6,
+            "y": 4,
+            "w": 6,
+            "h": 4
+          },
+          "agGridOptions": {
+            "columnDefs": [
+              { "field": "month", "headerName": "Month", "sortable": true, "filter": true },
+              { "field": "activeUsers", "headerName": "Active Users", "sortable": true, "filter": true },
+              { "field": "newUsers", "headerName": "New Users", "sortable": true, "filter": true },
+              { "field": "churnRate", "headerName": "Churn Rate (%)", "sortable": true, "filter": true },
+              { "field": "avgSessionTime", "headerName": "Avg. Session (min)", "sortable": true, "filter": true }
+            ],
+            "defaultColDef": {
+              "flex": 1,
+              "minWidth": 100,
+              "resizable": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "salesTrends",
+      "title": "Sales and Revenue Trends",
+      "autoRefresh": 60,
+      "widgets": [
+        {
+          "id": "salesTrendsChart",
+          "type": "AgChart",
+          "title": "Sales and Revenue Trends",
+          "sourceKey": "salesByMonth",
+          "layout": { "x": 0, "y": 0, "w": 12, "h": 6 },
           "agChartOptions": {
             "title": {
               "text": "Sales and Revenue Trends"
             },
             "series": [
               {
-                "type": "bar",
+                "type": "column",
                 "xKey": "month",
                 "yKey": "sales",
                 "yName": "Sales ($)",
-                "fill": "#4CAF50",
-                "yAxis": {
-                  "scale": "log"
-                }
+                "fill": "#4CAF50"
               },
               {
-                "type": "bar",
+                "type": "line",
                 "xKey": "month",
                 "yKey": "revenue",
                 "yName": "Revenue ($)",
-                "fill": "#FF9800",
-                "yAxis": {
-                  "scale": "linear"
+                "stroke": "#FF9800",
+                "marker": {
+                  "enabled": true,
+                  "size": 6
                 }
               }
             ],
@@ -87,6 +315,7 @@
               {
                 "type": "number",
                 "position": "left",
+                "keys": ["sales"],
                 "title": { "text": "Amount ($)" }
               }
             ],
@@ -95,42 +324,126 @@
               "position": "bottom"
             },
             "tooltip": {
-              "enabled": true,
-              "rendererFn": "formatCurrencyTooltip"
+              "enabled": true
             }
           },
           "interactions": {
             "onClick": {
               "type": "filter",
               "filterKey": "month",
-              "targetComponents": ["linechart", "salesTable"]
+              "targetComponents": ["salesByProductChart", "revenueByProductChart", "userEngagementChart"]
             }
           }
         },
         {
-          "id": "linechart",
+          "id": "salesByProductChart",
+          "type": "AgChart",
+          "title": "Sales by Product",
+          "sourceKey": "salesByProduct",
+          "layout": { "x": 0, "y": 6, "w": 6, "h": 6 },
+          "agChartOptions": {
+            "title": {
+              "text": "Sales by Product"
+            },
+            "series": [
+              {
+                "type": "pie",
+                "angleKey": "sales",
+                "labelKey": "product",
+                "calloutLabelKey": "product",
+                "sectorLabelKey": "sales",
+                "fills": ["#4CAF50", "#2196F3", "#FF9800", "#F44336"],
+                "aggregated": true
+              }
+            ],
+            "legend": {
+              "enabled": true,
+              "position": "right"
+            }
+          },
+          "interactions": {
+            "onClick": {
+              "type": "filter",
+              "filterKey": "product",
+              "targetComponents": ["salesTrendsChart", "revenueByProductChart", "userEngagementChart"]
+            }
+          }
+        },
+        {
+          "id": "revenueByProductChart",
+          "type": "AgChart",
+          "title": "Revenue by Product",
+          "sourceKey": "salesByProduct",
+          "layout": { "x": 6, "y": 6, "w": 6, "h": 6 },
+          "agChartOptions": {
+            "title": {
+              "text": "Revenue by Product"
+            },
+            "series": [
+              {
+                "type": "pie",
+                "angleKey": "revenue",
+                "labelKey": "product",
+                "calloutLabelKey": "product",
+                "sectorLabelKey": "revenue",
+                "fills": ["#4CAF50", "#2196F3", "#FF9800", "#F44336"],
+                "aggregated": true
+              }
+            ],
+            "legend": {
+              "enabled": true,
+              "position": "right"
+            }
+          },
+          "interactions": {
+            "onClick": {
+              "type": "filter",
+              "filterKey": "product",
+              "targetComponents": ["salesTrendsChart", "salesByProductChart", "userEngagementChart"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "userEngagement",
+      "title": "User Engagement Over Time",
+      "autoRefresh": 120,
+      "widgets": [
+        {
+          "id": "userEngagementChart",
           "type": "AgChart",
           "title": "User Engagement Over Time",
           "sourceKey": "userMetrics",
-          "layout": { "x": 6, "y": 0, "w": 6, "h": 5 },
+          "layout": { "x": 0, "y": 0, "w": 12, "h": 6 },
           "agChartOptions": {
             "title": {
               "text": "User Engagement Over Time"
             },
             "series": [
               {
-                "type": "line",
+                "type": "area",
                 "xKey": "month",
                 "yKey": "activeUsers",
                 "yName": "Active Users",
-                "stroke": "#2196F3"
+                "fill": "rgba(33, 150, 243, 0.3)",
+                "stroke": "#2196F3",
+                "marker": {
+                  "enabled": true,
+                  "size": 6
+                }
               },
               {
-                "type": "line",
+                "type": "area",
                 "xKey": "month",
                 "yKey": "signups",
                 "yName": "New Signups",
-                "stroke": "#F44336"
+                "fill": "rgba(244, 67, 54, 0.3)",
+                "stroke": "#F44336",
+                "marker": {
+                  "enabled": true,
+                  "size": 6
+                }
               }
             ],
             "axes": [
@@ -142,29 +455,72 @@
               {
                 "type": "number",
                 "position": "left",
-                "title": { "text": "User Count" }
+                "keys": ["activeUsers", "signups"],
+                "title": { "text": "Count" }
               }
             ],
             "legend": {
               "enabled": true,
-              "position": "right"
+              "position": "bottom"
             },
             "tooltip": {
               "enabled": true
             }
           },
-          "listeners": {
-            "eventType": "filter",
-            "sourceComponent": "barchart",
-            "filterKey": "month"
-          }
+          "listeners": [
+            {
+              "eventType": "filter",
+              "sourceComponent": "salesTrendsChart",
+              "filterKey": "month"
+            },
+            {
+              "eventType": "filter",
+              "sourceComponent": "salesByProductChart",
+              "filterKey": "product"
+            },
+            {
+              "eventType": "filter",
+              "sourceComponent": "revenueByProductChart",
+              "filterKey": "product"
+            }
+          ]
         },
         {
-          "id": "salesTable",
+          "id": "userMetricsTable",
           "type": "AGGrid",
-          "title": "Sales Data Table",
+          "title": "User Metrics Table",
+          "sourceKey": "userMetrics",
+          "layout": { "x": 0, "y": 6, "w": 12, "h": 6 },
+          "agGridOptions": {
+            "columnDefs": [
+              { "field": "month", "headerName": "Month", "sortable": true, "filter": true },
+              { "field": "activeUsers", "headerName": "Active Users", "sortable": true, "filter": true },
+              { "field": "signups", "headerName": "New Signups", "sortable": true, "filter": true }
+            ],
+            "defaultColDef": {
+              "resizable": true,
+              "filter": true,
+              "sortable": true
+            },
+            "pagination": true,
+            "paginationPageSize": 20,
+            "rowSelection": "single",
+            "animateRows": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "sales",
+      "title": "Sales",
+      "autoRefresh": 60,
+      "widgets": [
+        {
+          "id": "salesDataGrid",
+          "type": "AGGrid",
+          "title": "Sales Data",
           "sourceKey": "salesData",
-          "layout": { "x": 0, "y": 5, "w": 12, "h": 6 },
+          "layout": { "x": 0, "y": 0, "w": 12, "h": 12 },
           "agGridOptions": {
             "columnDefs": [
               { "field": "month", "headerName": "Month", "sortable": true, "filter": true },
@@ -181,16 +537,15 @@
             "paginationPageSize": 20,
             "rowSelection": "single",
             "animateRows": true
-          },
-          "interactions": {
-            "onRowSelected": {
-              "type": "filter",
-              "filterKey": "month",
-              "targetComponents": ["barchart", "linechart"]
-            }
           }
         }
       ]
+    },
+    {
+      "id": "empty",
+      "title": "Empty",
+      "autoRefresh": 0,
+      "widgets": []
     },
     {
       "id": "teamMetrics",
