@@ -1,0 +1,202 @@
+{
+  "dashboardId": "exec_summary",
+  "title": "Executive Sales Dashboard",
+  "theme": {
+    "mode": "dark",
+    "primaryColor": "#00B8D9",
+    "fontFamily": "Inter, sans-serif"
+  },
+  "dataSources": {
+    "salesData": {
+      "type": "api",
+      "url": "/api/data/sales",
+      "method": "GET"
+    },
+    "userMetrics": {
+      "type": "api",
+      "url": "/api/data/users"
+    },
+    "regions": {
+      "type": "api",
+      "url": "/api/data/regions"
+    }
+  },
+  "globalFilters": [
+    {
+      "id": "dateRange",
+      "type": "dateRange",
+      "label": "Date",
+      "field": "date",
+      "default": { "from": "2024-01-01", "to": "2024-12-31" },
+      "appliesTo": ["salesData", "userMetrics"]
+    },
+    {
+      "id": "regionFilter",
+      "type": "dropdown",
+      "label": "Region",
+      "field": "region",
+      "optionsSource": "regions",
+      "multi": true,
+      "appliesTo": ["salesData"]
+    }
+  ],
+  "tabs": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "autoRefresh": 60,
+      "widgets": [
+        {
+          "id": "barchart",
+          "type": "AgChart",
+          "title": "Sales and Revenue Trends",
+          "sourceKey": "salesData",
+          "layout": { "x": 0, "y": 0, "w": 6, "h": 5 },
+          "agChartOptions": {
+            "title": {
+              "text": "Sales and Revenue Trends"
+            },
+            "series": [
+              {
+                "type": "bar",
+                "xKey": "month",
+                "yKey": "sales",
+                "yName": "Sales ($)",
+                "fill": "#4CAF50",
+                "yAxis": {
+                  "scale": "log"
+                }
+              },
+              {
+                "type": "bar",
+                "xKey": "month",
+                "yKey": "revenue",
+                "yName": "Revenue ($)",
+                "fill": "#FF9800",
+                "yAxis": {
+                  "scale": "linear"
+                }
+              }
+            ],
+            "axes": [
+              {
+                "type": "category",
+                "position": "bottom",
+                "title": { "text": "Month" }
+              },
+              {
+                "type": "number",
+                "position": "left",
+                "title": { "text": "Amount ($)" }
+              }
+            ],
+            "legend": {
+              "enabled": true,
+              "position": "bottom"
+            },
+            "tooltip": {
+              "enabled": true,
+              "rendererFn": "formatCurrencyTooltip"
+            }
+          },
+          "interactions": {
+            "onClick": {
+              "type": "filter",
+              "filterKey": "month",
+              "targetComponents": ["linechart", "salesTable"]
+            }
+          }
+        },
+        {
+          "id": "linechart",
+          "type": "AgChart",
+          "title": "User Engagement Over Time",
+          "sourceKey": "userMetrics",
+          "layout": { "x": 6, "y": 0, "w": 6, "h": 5 },
+          "agChartOptions": {
+            "title": {
+              "text": "User Engagement Over Time"
+            },
+            "series": [
+              {
+                "type": "line",
+                "xKey": "month",
+                "yKey": "activeUsers",
+                "yName": "Active Users",
+                "stroke": "#2196F3"
+              },
+              {
+                "type": "line",
+                "xKey": "month",
+                "yKey": "signups",
+                "yName": "New Signups",
+                "stroke": "#F44336"
+              }
+            ],
+            "axes": [
+              {
+                "type": "category",
+                "position": "bottom",
+                "title": { "text": "Month" }
+              },
+              {
+                "type": "number",
+                "position": "left",
+                "title": { "text": "User Count" }
+              }
+            ],
+            "legend": {
+              "enabled": true,
+              "position": "right"
+            },
+            "tooltip": {
+              "enabled": true
+            }
+          },
+          "listeners": {
+            "eventType": "filter",
+            "sourceComponent": "barchart",
+            "filterKey": "month"
+          }
+        },
+        {
+          "id": "salesTable",
+          "type": "AGGrid",
+          "title": "Sales Data Table",
+          "sourceKey": "salesData",
+          "layout": { "x": 0, "y": 5, "w": 12, "h": 6 },
+          "agGridOptions": {
+            "columnDefs": [
+              { "field": "month", "headerName": "Month", "sortable": true, "filter": true },
+              { "field": "product", "headerName": "Product", "sortable": true, "filter": true },
+              { "field": "sales", "headerName": "Sales ($)", "sortable": true, "filter": true },
+              { "field": "revenue", "headerName": "Revenue ($)", "sortable": true, "filter": true }
+            ],
+            "defaultColDef": {
+              "resizable": true,
+              "filter": true,
+              "sortable": true
+            },
+            "pagination": true,
+            "paginationPageSize": 20,
+            "rowSelection": "single",
+            "animateRows": true
+          },
+          "interactions": {
+            "onRowSelected": {
+              "type": "filter",
+              "filterKey": "month",
+              "targetComponents": ["barchart", "linechart"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "teamMetrics",
+      "title": "Team Metrics",
+      "autoRefresh": 120,
+      "widgets": []
+    }
+  ]
+}
