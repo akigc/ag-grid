@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
+import { ClientSideRowModelModule } from 'ag-grid-community';
 import { useDashboard } from '../../context/DashboardContext';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -30,6 +31,7 @@ const AGGridWidget = ({ id, title, sourceKey, agGridOptions, interactions }) => 
           {...agGridOptions}
           rowData={rowData}
           onRowSelected={onRowSelected}
+          modules={[ClientSideRowModelModule]}
           defaultColDef={{
             ...agGridOptions.defaultColDef,
             cellStyle: { color: 'var(--text-color)' }
@@ -40,4 +42,4 @@ const AGGridWidget = ({ id, title, sourceKey, agGridOptions, interactions }) => 
   );
 };
 
-export default AGGridWidget; 
+export default AGGridWidget;
